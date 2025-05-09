@@ -1,0 +1,6 @@
+train: C:\Projects\MastersThesis\YOLO\yolov5\images\train
+val: C:\Projects\MastersThesis\YOLO\yolov5\images\val
+
+nc: 14
+names: ['bargraph', 'chart', 'damper', 'fan', 'line', 'mixer',
+           'motor', 'nav', 'pump', 'status', 'tag', 'value', 'valve', 'pipe']
