@@ -25,36 +25,17 @@ def combine_yolo_annotations_and_copy_images(image_dir1, image_dir2, annotation_
 
     os.makedirs(output_image_dir, exist_ok=True)
     os.makedirs(output_annotation_dir, exist_ok=True)
-    os.makedirs(output_image_dir / "train", exist_ok=True)
-    os.makedirs(output_annotation_dir / "train", exist_ok=True)
 
-    image_files1 = set((image_dir1 / "train").glob('*'))
-    image_files2 = set((image_dir2 / "train").glob('*')) 
+    # Copy images from both directories to the output
+    shutil.copytree(image_dir1 / "train", output_image_dir / "train")
+    for f in (image_dir2).glob("*"):
+        shutil.copy(f, output_image_dir / "train")
 
-    all_image_files = image_files1 | image_files2 
+    # Copy annotations from both directories to the output
+    shutil.copytree(annotation_dir1 / "train", output_annotation_dir / "train")
+    for f in (annotation_dir2).glob("*"):
+        shutil.copy(f, output_annotation_dir / "train")
 
-    for image_file in all_image_files:
-        
-        annotation_file1 = annotation_dir1 / f"{image_file.stem}.txt"
-        annotation_file2 = annotation_dir2 / f"{image_file.stem}.txt"
-        
-        combined_annotations = []
-
-        if annotation_file1.exists():
-            with annotation_file1.open('r') as file1:
-                combined_annotations.extend(file1.readlines())
-
-        if annotation_file2.exists():
-            with annotation_file2.open('r') as file2:
-                combined_annotations.extend(file2.readlines())
-
-        with (output_annotation_dir / "train" / f"{image_file.stem}.txt").open('w') as output_file:
-            output_file.writelines(combined_annotations)
-
-        if image_file in image_files1:
-            shutil.copy(image_file, output_image_dir / "train" / image_file.name)
-        elif image_file in image_files2:
-            shutil.copy(image_file, output_image_dir / "train" / image_file.name)
 
     shutil.copytree(image_dir1 / "val", output_image_dir / "val")
     shutil.copytree(annotation_dir1 / "val", output_annotation_dir / "val")

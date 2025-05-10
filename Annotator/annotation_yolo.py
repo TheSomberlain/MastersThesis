@@ -57,6 +57,11 @@ def split_and_prepare_yolo_data(source_dir, dest_dir, class_names, split_ratio=0
                 with open(label_path, 'w') as f:
                     f.write(f"{class_id} 0.5 0.5 1.0 1.0\n")
 
+    classes_txt_path = os.path.join(dest_dir, "classes.txt")
+    with open(classes_txt_path, 'w') as f:
+        for class_name in class_names:
+            f.write(f"{class_name}\n")
+    print(f"Saved class list to: {classes_txt_path}")
     print("✅ Dataset split and YOLO-format data prepared.")
 
 split_and_prepare_yolo_data(SOURCE_DIR, DEST_DIR, CLASS_NAMES, split_ratio=0.8)

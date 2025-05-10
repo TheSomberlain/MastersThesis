@@ -1,6 +1,6 @@
-train: C:\Projects\MastersThesis\YOLO\yolov5\images\train
-val: C:\Projects\MastersThesis\YOLO\yolov5\images\val
+train: C:\Projects\MastersThesis\DataCombiner\results\yolo\images\train
+val: C:\Projects\MastersThesis\DataCombiner\results\yolo\images\val
 
-nc: 14
-names: ['bargraph', 'chart', 'damper', 'fan', 'line', 'mixer',
-           'motor', 'nav', 'pump', 'status', 'tag', 'value', 'valve', 'pipe']
+nc: 15
+names: ['bargraph', 'button', 'chart', 'fan', 'mixer', 'motor', 'pipe',
+           'pump_isa', 'pump_iso', 'silo', 'status', 'tag', 'tank', 'value', 'valve']
