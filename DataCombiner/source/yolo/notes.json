@@ -1,0 +1,69 @@
+{
+  "categories": [
+    {
+      "id": 0,
+      "name": "bargraph"
+    },
+    {
+      "id": 1,
+      "name": "button"
+    },
+    {
+      "id": 2,
+      "name": "chart"
+    },
+    {
+      "id": 3,
+      "name": "fan"
+    },
+    {
+      "id": 4,
+      "name": "mixer"
+    },
+    {
+      "id": 5,
+      "name": "motor"
+    },
+    {
+      "id": 6,
+      "name": "pipe"
+    },
+    {
+      "id": 7,
+      "name": "pump_isa"
+    },
+    {
+      "id": 8,
+      "name": "pump_iso"
+    },
+    {
+      "id": 9,
+      "name": "silo"
+    },
+    {
+      "id": 10,
+      "name": "status"
+    },
+    {
+      "id": 11,
+      "name": "tag"
+    },
+    {
+      "id": 12,
+      "name": "tank"
+    },
+    {
+      "id": 13,
+      "name": "value"
+    },
+    {
+      "id": 14,
+      "name": "valve"
+    }
+  ],
+  "info": {
+    "year": 2025,
+    "version": "1.0",
+    "contributor": "Label Studio"
+  }
+}

@@ -1,0 +1,15 @@
+bargraph
+button
+chart
+fan
+mixer
+motor
+pipe
+pump_isa
+pump_iso
+silo
+status
+tag
+tank
+value
+valve
