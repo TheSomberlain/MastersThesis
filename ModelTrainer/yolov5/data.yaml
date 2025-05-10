@@ -1,5 +1,5 @@
-train: C:\Projects\MastersThesis\DataCombiner\results\yolo\images\train
-val: C:\Projects\MastersThesis\DataCombiner\results\yolo\images\val
+train: ..\..\DataCombiner\results\yolo\images\train
+val: ..\..\DataCombiner\results\yolo\images\val
 
 nc: 15
 names: ['bargraph', 'button', 'chart', 'fan', 'mixer', 'motor', 'pipe',
