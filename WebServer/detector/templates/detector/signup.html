@@ -1,0 +1,49 @@
+{% extends 'layout.html' %}
+
+{% block title %}Sign Up{% endblock %}
+
+{% load static %}
+{% load filters %}
+
+{% block content %}
+<form method="post" class="mx-auto" style="
+ background: rgba(255, 255, 255, 0.033);
+    backdrop-filter: blur(15px);
+    padding: 40px;
+    border-radius: 20px;
+    max-width: 400px;
+    box-shadow: 0 0 30px rgba(0, 0, 0, 0.7);
+">
+    {% csrf_token %}
+    <h2 class="text-center text-white mb-4" style="font-weight: 300; letter-spacing: 1px;">Welcome to Detector!</h2>
+
+    {% if form.errors %}
+        <div class="alert alert-danger">
+            <ul>
+                {% for field in form %}
+                    {% for error in field.errors %}
+                        <li>{{ field.label }}: {{ error }}</li>
+                    {% endfor %}
+                {% endfor %}
+                {% for error in form.non_field_errors %}
+                    <li>{{ error }}</li>
+                {% endfor %}
+            </ul>
+        </div>
+    {% endif %}
+
+    <div class="mb-3">
+        <label class="form-label text-white-50">Username</label>
+        {{ form.username|add_class:"form-control bg-dark border-0 text-white rounded-pill px-3 py-2" }}
+    </div>
+    <div class="mb-3">
+        <label class="form-label text-white-50">Password</label>
+        {{ form.password1|add_class:"form-control bg-dark text-white border-0 rounded-pill px-3 py-2" }}
+    </div>
+    <div class="mb-3">
+        <label class="form-label text-white-50">Confirm Password</label>
+        {{ form.password2|add_class:"form-control bg-dark text-white border-0 rounded-pill px-3 py-2" }}
+    </div>
+    <button type="submit" class="btn btn-outline-secondary w-100 rounded-pill py-2 fs-5 mt-5">Register</button>
+</form>
+{% endblock %}

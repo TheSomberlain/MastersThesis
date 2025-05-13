@@ -1,0 +1,161 @@
+{% extends 'layout.html' %}
+
+{% load static %}
+
+{% block title %}Upload{% endblock %}
+
+{% block content %}
+<form id="upload-form" method="post" enctype="multipart/form-data" class="mx-auto" style="
+    background: rgba(255, 255, 255, 0.033);
+    backdrop-filter: blur(15px);
+    padding: 40px;
+    border-radius: 20px;
+    max-width: 400px;
+    box-shadow: 0 0 30px rgba(0, 0, 0, 0.7);
+">
+    {% csrf_token %}
+    <h2 class="text-center text-white mb-4">Upload Files</h2>
+
+    <div id="drop-area" class="mb-4 p-5 text-center border-0 rounded" style="background: rgba(255,255,255,0.05); cursor: pointer;">
+        <p class="text-white-50">Drag & Drop files here or click to select</p>
+        <input type="file" id="file-input" name="files" class="d-none" multiple>
+    </div>
+
+    <button type="button" id="file-status-btn" class="btn btn-outline-secondary w-100 rounded-pill py-2 fs-5 mb-3" data-bs-toggle="modal" data-bs-target="#filesModal" disabled>
+        Upload
+    </button>
+
+    <button type="button" class="btn btn-success w-100 rounded-pill py-2 fs-5 mb-3" id="analyze-btn" style="display: none;" onclick="startAnalysis()">
+        Analyze
+    </button>
+
+
+    <div id="analysis-progress-container" style="
+    display: none;
+    width: 100%;
+    height: 8px;
+    background: rgba(255, 255, 255, 0.1);
+    border: 1px solid rgba(255,255,255,0.2);
+    border-radius: 4px;
+    overflow: hidden;
+    margin-top: 20px;
+">
+    <div id="analysis-progress" style="
+        width: 0%;
+        height: 100%;
+        background: linear-gradient(to right, rgba(0,255,0,0.5), rgba(0,255,0,0.8));
+        transition: width 0.5s ease;
+    "></div>
+    </div>
+</form>
+
+<div class="modal fade" id="filesModal" tabindex="-1" aria-labelledby="filesModalLabel" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content bg-dark text-white">
+      <div class="modal-header">
+        <h5 class="modal-title" id="filesModalLabel">Uploaded Files</h5>
+        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body">
+        <ul id="files-list">
+            <li>No files yet.</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+let uploadedFiles = [];
+const dropArea = document.getElementById('drop-area');
+const fileInput = document.getElementById('file-input');
+const fileStatusBtn = document.getElementById('file-status-btn');
+const analyzeBtn = document.getElementById('analyze-btn');
+const filesList = document.getElementById('files-list');
+
+dropArea.addEventListener('click', () => fileInput.click());
+
+fileInput.addEventListener('change', (e) => handleFiles(e.target.files));
+
+dropArea.addEventListener('dragover', (e) => {
+    e.preventDefault();
+    dropArea.classList.add('border-primary');
+});
+dropArea.addEventListener('dragleave', () => dropArea.classList.remove('border-primary'));
+dropArea.addEventListener('drop', (e) => {
+    e.preventDefault();
+    dropArea.classList.remove('border-primary');
+    handleFiles(e.dataTransfer.files);
+});
+
+function handleFiles(files) {
+    if (files.length > 0) {
+        uploadedFiles = Array.from(files);
+        updateFileList();
+        
+        fileStatusBtn.disabled = false;
+        fileStatusBtn.classList.remove('btn-outline-secondary');
+        fileStatusBtn.classList.add('btn-outline-success');
+        fileStatusBtn.innerText = 'Ready';
+        analyzeBtn.style.display = 'block';
+    }
+}
+
+function updateFileList() {
+    filesList.innerHTML = '';
+    uploadedFiles.forEach(file => {
+        filesList.innerHTML += `<li>${file.name}</li>`;
+    });
+}
+
+function startAnalysis() {
+    if (uploadedFiles.length === 0) {
+        alert('Please upload files first.');
+        return;
+    }
+
+    document.getElementById('analysis-progress-container').style.display = 'block';
+    document.getElementById('analysis-progress').style.width = '0%';
+
+    const formData = new FormData();
+    uploadedFiles.forEach(file => {
+        formData.append('files', file);
+    });
+
+    fetch('/api/analyze/', {
+        method: 'POST',
+        body: formData,
+        headers: {
+            'X-CSRFToken': getCSRFToken()
+        }
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.status === 'completed') {
+            setTimeout(() => {
+                window.location.href = data.redirect;
+            }, 500);
+        } else {
+            alert('Analysis failed');
+        }
+    })
+    .catch(error => {
+        clearInterval(interval);
+        alert('Error during analysis: ' + error);
+    });
+}
+
+function getCSRFToken() {
+    let cookieValue = null;
+    if (document.cookie && document.cookie !== '') {
+        document.cookie.split(';').forEach(function(cookie) {
+            cookie = cookie.trim();
+            if (cookie.substring(0, 10) === ('csrftoken=')) {
+                cookieValue = decodeURIComponent(cookie.substring(10));
+            }
+        });
+    }
+    return cookieValue;
+}
+</script>
+{% endblock %}

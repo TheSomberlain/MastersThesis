@@ -1,0 +1,27 @@
+{% extends 'layout.html' %}
+
+{% block title %}History{% endblock %}
+
+{% block content %}
+{% load static %}
+<h1>Історія обробки</h1>
+<table class="table table-striped">
+    <tr>
+        <th>Дата</th>
+        <th>Зображення</th>
+        <th>Результат</th>
+        <th>CSV</th>
+        <th>XLSX</th>
+    </tr>
+    {% for record in records %}
+    <tr>
+        <td>{{ record.created_at }}</td>
+        <td><img src="{{ record.image.url }}" width="100"></td>
+        <td><img src="{{ record.processed_image.url }}" width="100"></td>
+        <td><a href="{{ record.result_csv.url }}" class="btn btn-success">CSV</a></td>
+        <td><a href="{{ record.result_xlsx.url }}" class="btn btn-info">XLSX</a></td>
+    </tr>
+    {% endfor %}
+</table>
+<a href="{% url 'upload' %}" class="btn btn-link">Назад</a>
+{% endblock %}

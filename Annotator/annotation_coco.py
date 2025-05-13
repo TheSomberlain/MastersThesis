@@ -1,74 +1,56 @@
 import os
 import json
-import random
 import shutil
 from PIL import Image
 from tqdm import tqdm
 from pathlib import Path
 
 DATASET_DIR = Path(r"C:\Projects\MastersThesis\HMISorter\dest")
-OUTPUT_DIR = r"C:\Projects\MastersThesis\Annotator\results\coco\annotations"
+OUTPUT_DIR = Path(r"C:\Projects\MastersThesis\Annotator\results\coco")
 
-def split_and_convert_to_coco(dataset_dir, output_dir, train_ratio=0.8, seed=42):
-    random.seed(seed)
-
-    class_names = sorted([x for x in os.listdir(dataset_dir)])
+def convert_to_coco(dataset_dir, output_dir):
+    class_names = sorted([x for x in os.listdir(dataset_dir) if os.path.isdir(os.path.join(dataset_dir, x))])
     class_to_id = {name: idx for idx, name in enumerate(class_names)}
 
-    os.makedirs(f"{output_dir}/images/train", exist_ok=True)
-    os.makedirs(f"{output_dir}/images/val", exist_ok=True)
+    images_dir = output_dir / "images"
+    os.makedirs(images_dir, exist_ok=True)
 
-    train_images, val_images = [], []
-
-    for class_name in tqdm(class_names, desc="Splitting dataset"):
-        src_folder = os.path.join(dataset_dir, class_name)
-        if not os.path.isdir(src_folder):
-            continue
-
-        images = [
-            img for img in os.listdir(src_folder)
-            if img.lower().endswith(('.jpg', '.jpeg', '.png'))
+    annotation = {
+        "info": {"description": "Converted dataset"},
+        "licenses": [],
+        "images": [],
+        "annotations": [],
+        "categories": [
+            {"id": idx, "name": name, "supercategory": "none"}
+            for name, idx in class_to_id.items()
         ]
-        random.shuffle(images)
-        split_index = int(len(images) * train_ratio)
-        train_list = images[:split_index]
-        val_list = images[split_index:]
+    }
 
-        for phase, img_list in zip(['train', 'val'], [train_list, val_list]):
-            for img_name in img_list:
-                src_path = os.path.join(src_folder, img_name)
-                dst_path = os.path.join(output_dir, 'images', phase, f"{class_name}_{img_name}")
-                shutil.copy2(src_path, dst_path)
+    annotation_id = 1
+    image_id = 1
 
-                phase_list = train_images if phase == 'train' else val_images
-                phase_list.append((dst_path, class_name))
+    for class_name in tqdm(class_names, desc="Processing classes"):
+        src_folder = dataset_dir / class_name
 
-    for phase, data in zip(['train', 'val'], [train_images, val_images]):
-        annotation = {
-            "info": {"description": f"{phase} set"},
-            "licenses": [],
-            "images": [],
-            "annotations": [],
-            "categories": [
-                {"id": idx, "name": name, "supercategory": "none"}
-                for name, idx in class_to_id.items()
-            ]
-        }
+        images = [img for img in os.listdir(src_folder) if img.lower().endswith(('.jpg', '.jpeg', '.png'))]
 
-        annotation_id = 1
-        image_id = 1
-        for img_path, class_name in tqdm(data, desc=f"Creating {phase}.json"):
+        for img_name in images:
+            src_path = src_folder / img_name
+            dst_name = f"{class_name}_{img_name}"
+            dst_path = images_dir / dst_name
+
+            shutil.copy2(src_path, dst_path)
+
             try:
-                with Image.open(img_path) as img:
+                with Image.open(dst_path) as img:
                     width, height = img.size
-            except:
+            except Exception as e:
+                print(f"Skipping {dst_name} due to error: {e}")
                 continue
-
-            relative_path = os.path.relpath(img_path, os.path.join(output_dir, 'images', phase))
 
             annotation["images"].append({
                 "id": image_id,
-                "file_name": relative_path,
+                "file_name": dst_name,
                 "width": width,
                 "height": height
             })
@@ -85,14 +67,14 @@ def split_and_convert_to_coco(dataset_dir, output_dir, train_ratio=0.8, seed=42)
             image_id += 1
             annotation_id += 1
 
-        with open(f"{output_dir}/{phase}.json", 'w') as f:
-            json.dump(annotation, f, indent=2)
+    output_json_path = output_dir / "dataset.json"
+    with open(output_json_path, 'w') as f:
+        json.dump(annotation, f, indent=2)
 
-        print(f"Saved {phase} annotations to: {phase}.json")
+    print(f"Saved annotations to: {output_json_path}")
 
 # Example call
-split_and_convert_to_coco(
+convert_to_coco(
     dataset_dir=DATASET_DIR,
-    output_dir=OUTPUT_DIR,
-    train_ratio=0.8
+    output_dir=OUTPUT_DIR
 )
