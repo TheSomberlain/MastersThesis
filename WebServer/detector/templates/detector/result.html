@@ -3,15 +3,15 @@
 
 {% block content %}
 <main class="flex-fill d-flex justify-content-center align-items-center" style="background: transparent; padding-bottom: 120px;">
-    <img id="current-image" src="{{ current_image }}"  style="max-width: 95%; max-height: calc(100vh - 150px); object-fit: contain; border: 1px solid rgba(255,255,255,0.2); background: rgba(255,255,255,0.05); border-radius: 10px;">
+    <img id="current-image" src="{{ current_image.url }}"  style="max-width: 95%; max-height: calc(100vh - 150px); object-fit: contain; border: 1px solid rgba(255,255,255,0.2); background: rgba(255,255,255,0.05); border-radius: 10px;">
 </main>
 
 <!-- Footer Controls -->
 <div class="d-flex justify-content-between align-items-center px-4 py-3" style="position: fixed; bottom: 0; width: 100%; background: rgba(0, 0, 0, 0.7);" 
-     data-current-id="{{ current_id }}" data-total-images="{{ total_images }}">
+     data-current-id="{{ current_pos }}" data-total-images="{{ total_images }}" data-actual-id="{{ current_id }}">
     
     <!-- Left: Image counter -->
-    <div class="text-white-50" id="image-counter">{{ current_id }} / {{ total_images }}</div>
+    <div class="text-white-50" id="image-counter">{{ current_pos }} / {{ total_images }}</div>
 
     <!-- Center: Generate Report -->
     <button type="button" class="btn btn-primary rounded-pill px-4 py-2 position-absolute start-50 translate-middle-x" id="btn-generate-report" data-bs-toggle="modal" data-bs-target="#reportModal">
@@ -20,8 +20,8 @@
 
     <!-- Right: Navigation buttons -->
     <div>
-        <button class="btn btn-outline-light me-2" id="btn-prev" {% if current_id <= 1 %}disabled{% endif %}>Previous</button>
-        <button class="btn btn-outline-light" id="btn-next" {% if current_id >= total_images %}disabled{% endif %}>Next</button>
+        <button class="btn btn-outline-light me-2" id="btn-prev" {% if current_pos <= 1 %}disabled{% endif %}>Previous</button>
+        <button class="btn btn-outline-light" id="btn-next" {% if current_pos >= total_images %}disabled{% endif %}>Next</button>
     </div>
 </div>
 
@@ -34,35 +34,119 @@
         <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
       </div>
       <div class="modal-body text-center">
-        <button type="button" class="btn btn-outline-info me-3">Download CSV</button>
-        <button type="button" class="btn btn-outline-success">Download Excel</button>
+        <button type="button" id = "btn-download-csv" class="btn btn-outline-info me-3">Download CSV</button>
+        <button type="button" id = "btn-download-excel" class="btn btn-outline-success">Download Excel</button>
       </div>
     </div>
   </div>
 </div>
 
 <script>
-// Get data from attributes safely
 const controls = document.querySelector('[data-current-id]');
-const currentId = parseInt(controls.getAttribute('data-current-id'));
+const currentId = parseInt(controls.getAttribute('data-actual-id'));
 const totalImages = parseInt(controls.getAttribute('data-total-images'));
-
+const current_pos = parseInt(controls.getAttribute('data-current-id'));
+const imageIds = {{ image_ids }}
+console.log(current_pos)
+console.log(totalImages)
+console.log({{ image_ids }})
 function previousImage() {
-    if (currentId > 1) {
+    if (current_pos > 1) {
         window.location.href = `/result/${currentId - 1}/`;
+        current_pos = current_pos - 1
+        console.log(current_pos)
     }
 }
 
 function nextImage() {
-    if (currentId < totalImages) {
+    if (current_pos < totalImages) {
         window.location.href = `/result/${currentId + 1}/`;
+        current_pos = current_pos + 1
+        console.log(current_pos)
     }
 }
 
-// Bind buttons safely after DOM is ready
+function getCSRFToken() {
+    let cookieValue = null;
+    if (document.cookie && document.cookie !== '') {
+        document.cookie.split(';').forEach(function(cookie) {
+            cookie = cookie.trim();
+            if (cookie.substring(0, 10) === ('csrftoken=')) {
+                cookieValue = decodeURIComponent(cookie.substring(10));
+            }
+        });
+    }
+    return cookieValue;
+}
+
+function downloadExcel() {
+    fetch('/api/exportexcel/', {
+        method: 'POST',
+        headers: {
+            'X-CSRFToken': getCSRFToken(),
+            'Content-Type': 'application/x-www-form-urlencoded',
+        },
+        body: new URLSearchParams({
+            'image_ids': imageIds 
+        })
+    })
+    .then(response => {
+        if (!response.ok) {
+            throw new Error('Network response was not OK');
+        }
+        return response.blob();
+    })
+    .then(blob => {
+        const url = window.URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = 'rois_export.xlsx';
+        document.body.appendChild(a);
+        a.click();
+        a.remove();
+        window.URL.revokeObjectURL(url);
+    })
+    .catch(error => {
+        alert('Error downloading Excel: ' + error);
+    });
+}
+function downloadCsv() {
+    fetch('/api/exportcsv/', {
+        method: 'POST',
+        headers: {
+            'X-CSRFToken': getCSRFToken(),
+            'Content-Type': 'application/x-www-form-urlencoded',
+        },
+        body: new URLSearchParams({
+            'image_ids': imageIds 
+        })
+    })
+    .then(response => {
+        if (!response.ok) {
+            throw new Error('Network response was not OK');
+            console.log(response)
+        }
+        return response.blob();
+    })
+    .then(blob => {
+        const url = window.URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = 'rois_export.csv';
+        document.body.appendChild(a);
+        a.click();
+        a.remove();
+        window.URL.revokeObjectURL(url);
+    })
+    .catch(error => {
+        alert('Error downloading Csv: ' + error);
+    });
+}
 document.addEventListener('DOMContentLoaded', function(){
     document.getElementById('btn-prev').addEventListener('click', previousImage);
     document.getElementById('btn-next').addEventListener('click', nextImage);
+    document.getElementById('btn-download-excel').addEventListener('click', downloadExcel);
+    document.getElementById('btn-download-csv').addEventListener('click', downloadCsv);
 });
 </script>
 {% endblock %}

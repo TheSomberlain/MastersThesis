@@ -12,4 +12,6 @@ urlpatterns = [
     path('result/<int:image_id>/', views.result_view, name='result'),
     path('api/upload/', views.upload_files_api, name='upload_api'),
     path('api/analyze/', views.start_analysis_api, name='analyze_api'),
+    path('api/exportexcel/', views.export_rois_excel, name = 'export_excel'),
+    path('api/exportcsv/', views.export_rois_csv, name = 'export_csv')
 ]
