@@ -1,27 +1,116 @@
 {% extends 'layout.html' %}
-
 {% block title %}History{% endblock %}
 
 {% block content %}
-{% load static %}
-<h1>Історія обробки</h1>
-<table class="table table-striped">
-    <tr>
-        <th>Дата</th>
-        <th>Зображення</th>
-        <th>Результат</th>
-        <th>CSV</th>
-        <th>XLSX</th>
-    </tr>
-    {% for record in records %}
-    <tr>
-        <td>{{ record.created_at }}</td>
-        <td><img src="{{ record.image.url }}" width="100"></td>
-        <td><img src="{{ record.processed_image.url }}" width="100"></td>
-        <td><a href="{{ record.result_csv.url }}" class="btn btn-success">CSV</a></td>
-        <td><a href="{{ record.result_xlsx.url }}" class="btn btn-info">XLSX</a></td>
-    </tr>
-    {% endfor %}
-</table>
-<a href="{% url 'upload' %}" class="btn btn-link">Назад</a>
+<div class="container py-5" style="
+        background: rgba(255, 255, 255, 0.033);
+        backdrop-filter: blur(15px);
+        padding: 40px;
+        border-radius: 20px;
+        max-width: 1000px;
+        box-shadow: 0 0 30px rgba(0, 0, 0, 0.7);
+    ">
+    <h2 class="mb-4 text-light">History</h2>
+    <div class="table-responsive">
+        <table class="table table-dark table-hover align-middle">
+            <thead>
+                <tr>
+                    <th>Creation Date</th>
+                    <th>Name</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for report in reports %}
+                <tr>
+                    <td>{{ report.created_at|date:"Y-m-d H:i" }}</td>
+                    <td>{{ report.name|default:"Unnamed Report" }}</td>
+                    <td>
+                        <button class="btn btn-sm btn-outline-info me-2 btn-view-report" data-report-id="{{ report.id }}">
+                            View
+                        </button>                          
+                        {% if report.result_csv or report.result_xlsx %}
+                        <div class="btn-group">
+                            {% if report.result_csv %}
+                            <a href="{{ report.result_csv.url }}" class="btn btn-sm btn-outline-success">CSV</a>
+                            {% endif %}
+                            {% if report.result_xlsx %}
+                            <a href="{{ report.result_xlsx.url }}" class="btn btn-sm btn-outline-success">Excel</a>
+                            {% endif %}
+                        </div>
+                        {% else %}
+                        <span class="text-muted">No files</span>
+                        {% endif %}
+                    </td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="3" class="text-center text-muted">No reports yet.</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<!-- Modal -->
+<div class="modal fade" id="reportModal" tabindex="-1" aria-labelledby="reportModalLabel" aria-hidden="true">
+  <div class="modal-dialog modal-xl modal-dialog-centered">
+    <div class="modal-content bg-dark text-white">
+      <div class="modal-header">
+        <h5 class="modal-title" id="reportModalLabel">Report Preview</h5>
+        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body">
+        <!-- Carousel placeholder -->
+        <div id="reportCarousel" class="carousel slide" data-bs-ride="carousel">
+          <div class="carousel-inner" id="report-carousel-inner">
+            <!-- Images will be injected dynamically -->
+          </div>
+          <button class="carousel-control-prev" type="button" data-bs-target="#reportCarousel" data-bs-slide="prev">
+            <span class="carousel-control-prev-icon"></span>
+          </button>
+          <button class="carousel-control-next" type="button" data-bs-target="#reportCarousel" data-bs-slide="next">
+            <span class="carousel-control-next-icon"></span>
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+document.querySelectorAll('.btn-view-report').forEach(button => {
+    button.addEventListener('click', function() {
+        const reportId = this.dataset.reportId;
+
+        // Очистить карусель
+        const carouselInner = document.getElementById('report-carousel-inner');
+        carouselInner.innerHTML = '<div class="text-center py-5">Loading...</div>';
+
+        // Запрос к API получения изображений
+        fetch(`/api/reportimages/${reportId}/`)
+            .then(response => response.json())
+            .then(data => {
+                if (data.images.length > 0) {
+                    carouselInner.innerHTML = '';
+                    data.images.forEach((imgUrl, index) => {
+                        const activeClass = index === 0 ? 'active' : '';
+                        carouselInner.innerHTML += `
+                            <div class="carousel-item ${activeClass}">
+                                <img src="${imgUrl}" class="d-block w-100" style="max-height: 80vh; object-fit: contain;">
+                            </div>
+                        `;
+                    });
+                } else {
+                    carouselInner.innerHTML = '<div class="text-center py-5 text-muted">No images found.</div>';
+                }
+            });
+
+        // Открыть модальное окно
+        const reportModal = new bootstrap.Modal(document.getElementById('reportModal'));
+        reportModal.show();
+    });
+});    
+</script>
 {% endblock %}

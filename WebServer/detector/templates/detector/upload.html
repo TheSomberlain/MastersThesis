@@ -144,14 +144,21 @@ function startAnalysis() {
     .then(data => {
         clearInterval(interval)
         if (data.status === 'completed') {
+            console.log(data)
             progressBar.style.width = '100%';
             setTimeout(() => {
                 window.location.href = data.redirect;
             }, 500);
+
+            if (data.is_authenticated) {   
+                return createReport(data.images_ids)
+            } else {
+                console.log('User not authenticated, skipping report creation.');
+            }
         } else {
             alert('Analysis failed');
             progressContainer.style.display = 'none';
-        }
+        }               
     })
     .catch(error => {
         clearInterval(interval);
@@ -171,6 +178,32 @@ function getCSRFToken() {
         });
     }
     return cookieValue;
+}
+
+function createReport(imageIds) {
+    return fetch('/api/createreport/', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/x-www-form-urlencoded',
+            'X-CSRFToken': getCSRFToken() 
+        },
+        body: new URLSearchParams({
+            image_ids: imageIds.join(',')
+        })
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.report_id) {
+            alert('Report created!');
+            console.log('CSV:', data.result_csv_url);
+            console.log('XLSX:', data.result_xlsx_url);
+        } else {
+            alert('Failed: ' + data.error);
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+    });
 }
 </script>
 {% endblock %}
